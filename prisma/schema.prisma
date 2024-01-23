@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/client"
+  binaryTargets = ["native", "darwin", "darwin-arm64"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Os {
+  id          Int       @id @default(autoincrement())
+  client_name String
+  phone       String?
+  plate       String
+  model       String
+  date        String
+  status      String
+  services    Service[]
+}
+
+model Service {
+  id          Int    @id @default(autoincrement())
+  description String
+  quantity    Int
+  price       Float
+  Os          Os?    @relation(fields: [os_id], references: [id])
+
+  os_id Int?
+}
+
+model PendingBills {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+  due_date    String
+  price       Float
+
+  Installments Installments[]
+}
+
+model Installments {
+  id           Int          @id @default(autoincrement())
+  is_paid      Boolean
+  payment_date String
+  price        Float
+  PendingBills PendingBills @relation(fields: [pending_bill_id], references: [id])
+
+  pending_bill_id Int
+}
