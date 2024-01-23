@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { trpc } from '../../util';
 import { useNavigate } from 'react-router-dom';
 
-export default function NewOs() {
+export default function EditOs() {
   const navigate = useNavigate();
   // const [totalPrice, setTotalPrice] = useState(0);
   const [minService, setMinService] = useState(false);
@@ -115,7 +115,7 @@ export default function NewOs() {
           <div>
             <img src={IconNavigateNext} alt=">" width={16} height={16} />
           </div>
-          <h1>Novo</h1>
+          <h1>Editar</h1>
         </div>
       </div>
 

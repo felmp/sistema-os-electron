@@ -6,9 +6,11 @@ import IconStickyNote from '../../../public/img/sticky-note.svg'
 import { StatusOS } from '../../components/status-os'
 import { useState } from 'react';
 import { trpc } from '../../util';
+import { useNavigate } from 'react-router-dom';
 // import { useRouter } from 'next/navigation';
 
 export default function Os() {
+  const navigate = useNavigate();
   const [plateFilter, setPlateFilter] = useState('');
   const [clientFilter, setClientFilter] = useState('');
   const [modelFilter, setModelFilter] = useState('');
@@ -23,6 +25,7 @@ export default function Os() {
 
   const handleOsDetails = (id: number) => {
     console.log(id)
+    navigate(`os/${id}`)
   };
 
   const filteredOs = (plateFilter !== '' || clientFilter !== '' || modelFilter !== '')

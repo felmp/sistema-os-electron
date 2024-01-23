@@ -10,24 +10,31 @@ import Os from './modules/os/os';
 import NewOs from './modules/os/new-os';
 import PendingBills from './modules/pending-bills/pending-bills';
 import NewPendingBills from './modules/pending-bills/new-pending-bills';
+import EditOs from './modules/os/edit-os';
 
 function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      Component: Os,
-    },
-    {
-      path: "/os/cadastro",
-      Component: NewOs,
-    },
-    {
-      path: "/contas-pagar",
-      Component: PendingBills
-    },
-    {
-      path: "/contas-pagar/cadastro",
-      Component: NewPendingBills
+      element: <Os />,
+      children: [
+        {
+          path: "os/cadastro",
+          element: <NewOs />,
+        },
+        {
+          path: "os/:id",
+          element: <EditOs />,
+        },
+        {
+          path: "contas-pagar",
+          element: <PendingBills />,
+        },
+        {
+          path: "contas-pagar/cadastro",
+          element: <NewPendingBills />,
+        }
+      ]
     }
   ]);
 
