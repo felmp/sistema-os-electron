@@ -6,13 +6,16 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { trpc } from '../../util';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function EditOs() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  console.log('edit id : ' + id)
   // const [totalPrice, setTotalPrice] = useState(0);
   const [minService, setMinService] = useState(false);
-  const createOsFormSchema = z.object({
+  const updateOsFormSchema = z.object({
     client: z.string().trim().min(1, 'Cliente é obrigatório!'),
     phone: z.string().optional(),
     date: z.string().min(1, 'Data é obrigatória!'),
@@ -28,23 +31,26 @@ export default function EditOs() {
   })
 
   const utils = trpc.useContext();
-  const os = trpc.os.useQuery();
-  const addOs = trpc.osCreate.useMutation({
+
+  const os = trpc.osById.useQuery(id || '');
+  const services = trpc. serviceByOsId.useQuery(id || '');
+
+  const updateOs = trpc.osUpdate.useMutation({
     onSuccess: (e) => {
       utils.os.invalidate();
     }
   });
 
-  const addService = trpc.serviceCreate.useMutation({
+  const updateService = trpc.serviceUpdate.useMutation({
     onSuccess: () => {
       utils.os.invalidate();
     }
   })
 
-  type CreateOsFormData = z.infer<typeof createOsFormSchema>
+  type updateOsFormData = z.infer<typeof updateOsFormSchema>
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<CreateOsFormData>({
-    resolver: zodResolver(createOsFormSchema)
+  const { register, handleSubmit, control, formState: { errors } } = useForm<updateOsFormData>({
+    resolver: zodResolver(updateOsFormSchema)
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -61,10 +67,10 @@ export default function EditOs() {
   }
 
   function removeService(index: number) {
-    remove(fields.length - 1)
+    remove(index)
   }
 
-  async function createOs(data: any) {
+  async function handlerUpdateOs(data: any) {
     console.log(data)
     if (!data.services.find((s: any) => s.description !== '' && s.description !== '' && s.price !== '')) {
       setMinService(true)
@@ -73,7 +79,8 @@ export default function EditOs() {
 
     setMinService(false)
 
-    const result = await addOs.mutateAsync({
+    const result = await updateOs.mutateAsync({
+      id: id || '',
       client_name: data.client,
       date: data.date,
       model: data.model,
@@ -84,7 +91,8 @@ export default function EditOs() {
 
     for (const s of data.services) {
       if (s.description !== '' && s.quantity !== '' && s.price !== '') {
-        await addService.mutate({
+        await updateService.mutate({
+          id: s.id,
           description: s.description,
           quantity: Number(s.quantity),
           price: Number(s.price),
@@ -97,13 +105,15 @@ export default function EditOs() {
   }
 
   useEffect(() => {
-    append({
-      description: '',
-      quantity: '',
-      price: ''
+    services.data?.forEach(s => {
+      append({
+        description: s.description,
+        quantity: s.quantity.toString(),
+        price: s.price.toString()
+      })
     })
 
-  }, [append])
+  }, [services.data])
 
   const totalPrice = fields.reduce((acc, curr) => acc + Number(curr.price) * Number(curr.quantity), 0);
 
@@ -119,7 +129,7 @@ export default function EditOs() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(createOs)}>
+      <form onSubmit={handleSubmit(handlerUpdateOs)}>
         <div className='w-full h-auto mb-3 mt-4 bg-white rounded p-4'>
           <div className='flex flex-row font-normal text-xs gap-4'>
             <div className='w-full flex flex-col'>
@@ -127,6 +137,7 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
+                value={os.data?.client_name}
                 {...register('client')}
               />
               {
@@ -138,6 +149,7 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
+                value={os.data?.phone || ''}
                 {...register('phone')}
               />
             </div>
@@ -146,6 +158,7 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
+                value={os.data?.date }
                 {...register('date')}
               />
               {
@@ -160,6 +173,7 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
+                value={os.data?.plate}
                 {...register('plate')}
               />
               {
@@ -171,6 +185,7 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
+                value={os.data?.model}
                 {...register('model')}
               />
               {
@@ -250,7 +265,7 @@ export default function EditOs() {
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>
           <div className='flex flex-row'>
-            <a href='/' className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
+            <a onClick={() => console.log(os.data, services.data)} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
               Voltar
             </a>
           </div>

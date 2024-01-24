@@ -17,24 +17,22 @@ function App() {
     {
       path: "/",
       element: <Os />,
-      children: [
-        {
-          path: "os/cadastro",
-          element: <NewOs />,
-        },
-        {
-          path: "os/:id",
-          element: <EditOs />,
-        },
-        {
-          path: "contas-pagar",
-          element: <PendingBills />,
-        },
-        {
-          path: "contas-pagar/cadastro",
-          element: <NewPendingBills />,
-        }
-      ]
+    },
+    {
+      path: "os/cadastro",
+      element: <NewOs />,
+    },
+    {
+      path: "os/:id",
+      element: <EditOs />,
+    },
+    {
+      path: "contas-pagar",
+      element: <PendingBills />,
+    },
+    {
+      path: "contas-pagar/cadastro",
+      element: <NewPendingBills />,
     }
   ]);
 

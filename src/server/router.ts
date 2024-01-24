@@ -13,13 +13,16 @@ export const appRouter = t.router({
       return prisma.os.findMany();
     }),
   osById: t.procedure
-    .input(z.number().int())
+    .input(z.string())
     .query(({ input: id }) => {
-      return prisma.os.findUnique({
+      // return `this is number `;
+      const os = prisma.os.findUnique({
         where: {
-          id,
+          id: Number(id),
         }
       })
+
+      return os
     }),
   osCreate: t.procedure
     .input(z.object({
@@ -44,10 +47,53 @@ export const appRouter = t.router({
 
       return os;
     }),
+  osDelete: t.procedure
+    .input(z.string())
+    .mutation(async ({ input: id }) => {
+      const deletedOs = await prisma.os.delete({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      return deletedOs;
+    }),
+
+  osUpdate: t.procedure
+    .input(z.object({
+      id: z.string(),
+      client_name: z.string().optional(),
+      phone: z.string().optional(),
+      date: z.string().optional(),
+      plate: z.string().optional(),
+      model: z.string().optional(),
+      status: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...updatedFields } = input;
+
+      const updatedOs = await prisma.os.update({
+        where: {
+          id: Number(id),
+        },
+        data: updatedFields,
+      });
+
+      return updatedOs;
+    }),
   services: t.procedure
     .query(() => {
       return prisma.service.findMany();
     }),
+  serviceByOsId: t.procedure.input(z.string()).query(({ input: id }) => {
+    const services = prisma.service.findMany({
+      where: {
+        os_id: Number(id)
+      }
+    })
+
+    return services
+  }),
   serviceById: t.procedure
     .input(z.number().int())
     .query(({ input: id }) => {
@@ -75,6 +121,37 @@ export const appRouter = t.router({
       });
 
       return service;
+    }),
+  serviceDelete: t.procedure
+    .input(z.number().int())
+    .mutation(async ({ input: id }) => {
+      const deletedService = await prisma.service.delete({
+        where: {
+          id,
+        },
+      });
+
+      return deletedService;
+    }),
+  serviceUpdate: t.procedure
+    .input(z.object({
+      id: z.number().int(),
+      description: z.string().optional(),
+      quantity: z.number().optional(),
+      price: z.number().optional(),
+      os_id: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...updatedFields } = input;
+
+      const updatedService = await prisma.service.update({
+        where: {
+          id,
+        },
+        data: updatedFields,
+      });
+
+      return updatedService;
     }),
   pendingBills: t.procedure
     .query(() => {

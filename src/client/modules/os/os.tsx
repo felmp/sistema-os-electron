@@ -24,7 +24,6 @@ export default function Os() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
   const handleOsDetails = (id: number) => {
-    console.log(id)
     navigate(`os/${id}`)
   };
 
