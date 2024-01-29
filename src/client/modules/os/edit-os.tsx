@@ -11,9 +11,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 export default function EditOs() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [deletedServices, setDeletedServices] = useState<string[]>([]);
 
-  console.log('edit id : ' + id)
-  // const [totalPrice, setTotalPrice] = useState(0);
   const [minService, setMinService] = useState(false);
   const updateOsFormSchema = z.object({
     client: z.string().trim().min(1, 'Cliente é obrigatório!'),
@@ -23,9 +22,10 @@ export default function EditOs() {
     model: z.string().min(1, 'Modelo é obrigatório!'),
     services: z.array(
       z.object({
+        cod: z.string().optional(),
         description: z.string(),
         quantity: z.string(),
-        price: z.string()
+        price: z.string(),
       })
     ),
   })
@@ -33,7 +33,7 @@ export default function EditOs() {
   const utils = trpc.useContext();
 
   const os = trpc.osById.useQuery(id || '');
-  const services = trpc. serviceByOsId.useQuery(id || '');
+  const services = trpc.serviceByOsId.useQuery(id || '');
 
   const updateOs = trpc.osUpdate.useMutation({
     onSuccess: (e) => {
@@ -41,15 +41,33 @@ export default function EditOs() {
     }
   });
 
+  const deleteOs = trpc.osDelete.useMutation({
+    onSuccess: (e) => {
+      utils.os.invalidate();
+    }
+  })
+
   const updateService = trpc.serviceUpdate.useMutation({
     onSuccess: () => {
-      utils.os.invalidate();
+      utils.services.invalidate();
+    }
+  })
+
+  const createService = trpc.serviceCreate.useMutation({
+    onSuccess: () => {
+      utils.services.invalidate();
+    }
+  })
+
+  const deleteService = trpc.serviceDelete.useMutation({
+    onSuccess: () => {
+      utils.services.invalidate();
     }
   })
 
   type updateOsFormData = z.infer<typeof updateOsFormSchema>
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<updateOsFormData>({
+  const { register, handleSubmit, control, setValue, formState: { errors }, reset } = useForm<updateOsFormData>({
     resolver: zodResolver(updateOsFormSchema)
   })
 
@@ -60,13 +78,17 @@ export default function EditOs() {
 
   function addNewService() {
     append({
+      cod: '',
       description: '',
       quantity: '',
-      price: ''
+      price: '',
     })
   }
 
   function removeService(index: number) {
+    setDeletedServices((prevDeletedServices) => [...prevDeletedServices, fields[index].cod ?? '']);
+    console.log(fields[index])
+
     remove(index)
   }
 
@@ -91,29 +113,58 @@ export default function EditOs() {
 
     for (const s of data.services) {
       if (s.description !== '' && s.quantity !== '' && s.price !== '') {
-        await updateService.mutate({
-          id: s.id,
-          description: s.description,
-          quantity: Number(s.quantity),
-          price: Number(s.price),
-          os_id: result.id
-        });
+        if (s.cod === '') {
+          await createService.mutate({
+            description: s.description,
+            quantity: Number(s.quantity),
+            price: Number(s.price),
+            os_id: result.id
+          })
+        } else {
+          await updateService.mutate({
+            id: Number(s.cod),
+            description: s.description,
+            quantity: Number(s.quantity),
+            price: Number(s.price),
+            os_id: result.id
+          });
+        }
+      }
+    }
+
+    for (const deletedServiceId of deletedServices) {
+      if (deletedServiceId !== '') {
+        console.log(deletedServiceId)
+        await deleteService.mutate(Number(deletedServiceId))
       }
     }
 
     navigate('/');
   }
 
+  async function handleDeleteOs() {
+    await deleteOs.mutate(id || '')
+    navigate('/');
+  }
+  
   useEffect(() => {
-    services.data?.forEach(s => {
-      append({
-        description: s.description,
-        quantity: s.quantity.toString(),
-        price: s.price.toString()
-      })
-    })
-
-  }, [services.data])
+    if (os.data && services.data) {
+      reset({
+        client: os.data.client_name,
+        phone: os.data.phone || '',
+        date: os.data.date,
+        plate: os.data.plate,
+        model: os.data.model,
+        services: services.data.map((service) => ({
+          cod: service.id.toString(),
+          description: service.description,
+          quantity: service.quantity.toString(),
+          price: service.price.toString(),
+          delete: false
+        })),
+      });
+    }
+  }, [os.data, services.data, reset]);
 
   const totalPrice = fields.reduce((acc, curr) => acc + Number(curr.price) * Number(curr.quantity), 0);
 
@@ -137,7 +188,6 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                value={os.data?.client_name}
                 {...register('client')}
               />
               {
@@ -149,7 +199,6 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                value={os.data?.phone || ''}
                 {...register('phone')}
               />
             </div>
@@ -158,7 +207,6 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                value={os.data?.date }
                 {...register('date')}
               />
               {
@@ -173,7 +221,6 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                value={os.data?.plate}
                 {...register('plate')}
               />
               {
@@ -185,7 +232,6 @@ export default function EditOs() {
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                value={os.data?.model}
                 {...register('model')}
               />
               {
@@ -265,8 +311,13 @@ export default function EditOs() {
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>
           <div className='flex flex-row'>
-            <a onClick={() => console.log(os.data, services.data)} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
+            <a onClick={() => console.log(deletedServices)} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
               Voltar
+            </a>
+          </div>
+          <div className='flex flex-row'>
+            <a onClick={() => handleDeleteOs()} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-red-500 rounded'>
+              Deletar
             </a>
           </div>
           <div className='flex flex-row'>

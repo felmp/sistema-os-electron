@@ -28,7 +28,7 @@ model Service {
   description String
   quantity    Int
   price       Float
-  Os          Os?    @relation(fields: [os_id], references: [id])
+  Os          Os?    @relation(fields: [os_id], references: [id], onDelete: Cascade)
 
   os_id Int?
 }

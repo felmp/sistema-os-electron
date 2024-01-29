@@ -11,15 +11,15 @@ import { redirect } from 'react-router-dom';
 export default function NewPendingBills() {
   // const [totalPrice, setTotalPrice] = useState(0);
   const createPendingBillsFormSchema = z.object({
-    title: z.string().trim().min(1, 'Cliente é obrigatório!'),
+    title: z.string().trim(),
     description: z.string().optional(),
-    due_date: z.string().min(1, 'Data é obrigatória!'),
-    status: z.string().min(1, 'Status é obrigatório!'),
+    due_date: z.string(),
+    status: z.string(),
     installments_quantity: z.string(),
     installments: z.array(
       z.object({
         description: z.string(),
-        is_paid: z.boolean(),
+        is_paid: z.string(),
         payment_date: z.string(),
         price: z.string()
       })
@@ -54,7 +54,7 @@ export default function NewPendingBills() {
   function addNewInstallments() {
     append({
       description: '',
-      is_paid: false,
+      is_paid: 'teste',
       payment_date: '',
       price: ''
     })
@@ -66,43 +66,43 @@ export default function NewPendingBills() {
 
   async function createPendingBills(data: any) {
     console.log(data)
-    if (!data.pending_bills.find((s: any) => s.description !== '' && s.description !== '' && s.price !== '')) {
-      alert('É necessário adicionar pelo menos uma parcela!')
-      return;
-    }
+    // if (!data.installments.find((s: any) => s.description !== '' && s.description !== '' && s.price !== '')) {
+    //   alert('É necessário adicionar pelo menos uma parcela!')
+    //   return;
+    // }
 
-    try {
-      const result = await addPendingBills.mutateAsync({
-        description: data.description,
-        due_date: data.date,
-        price: data.model,
-        title: data.plate,
-      });
+    // try {
+    //   const result = await addPendingBills.mutateAsync({
+    //     description: data.description,
+    //     due_date: data.date,
+    //     price: data.model,
+    //     title: data.plate,
+    //   });
 
-      for (const s of data.services) {
-        if (s.description !== '' && s.is_paid === false && s.payment_date !== '' && s.price !== '') {
-          await addInstallments.mutate({
-            description: s.description,
-            payment_date: s.payment_date,
-            is_paid: s.is_paid,
-            price: Number(s.price),
-            pending_bill_id: result.id
-          });
-        }
-      }
+    //   for (const s of data.services) {
+    //     if (s.description !== '' && s.is_paid === false && s.payment_date !== '' && s.price !== '') {
+    //       await addInstallments.mutate({
+    //         description: s.description,
+    //         payment_date: s.payment_date,
+    //         is_paid: s.is_paid,
+    //         price: Number(s.price),
+    //         pending_bill_id: result.id
+    //       });
+    //     }
+    //   }
 
-      redirect('/')
+    //   redirect('/')
 
-    } catch (error) {
-      console.error('Erro ao criar OS:', error);
-      // Lidar com o erro, se necessário
-    }
+    // } catch (error) {
+    //   console.error('Erro ao criar OS:', error);
+    //   // Lidar com o erro, se necessário
+    // }
   }
 
   useEffect(() => {
     append({
       description: '',
-      is_paid: false,
+      is_paid: 'teste',
       payment_date: '',
       price: ''
     })
@@ -201,7 +201,7 @@ export default function NewPendingBills() {
                   <div className='w-full flex flex-col'>
                     <label className='mb-3'>Paga</label>
                     <input
-                      type="text"
+                      type="checkbox"
                       className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
                       {...register(`installments.${index}.is_paid`)}
                     />
@@ -259,7 +259,9 @@ export default function NewPendingBills() {
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>
           <div className='flex flex-row'>
-            <a href='/' className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
+            <a onClick={() => {
+              console.log('teste')
+            }} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
               Voltar
             </a>
           </div>
