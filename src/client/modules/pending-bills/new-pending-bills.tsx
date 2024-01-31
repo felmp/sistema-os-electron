@@ -10,6 +10,7 @@ import { trpc } from '../../util';
 import { redirect } from 'react-router-dom';
 import InputMask from 'react-input-mask';
 import { NumericFormat } from 'react-number-format';
+import { PickerOverlay } from 'filestack-react';
 
 export default function NewPendingBills() {
   const [totalPrice, setTotalPrice] = useState(0);
@@ -149,6 +150,37 @@ export default function NewPendingBills() {
     }
   };
 
+  async function handleSaveFile() {
+    try {
+      const formData = new FormData();
+  
+      files.forEach((file, index) => {
+        formData.append(`file${index + 1}`, file);
+      });
+  
+      await fetch("https://www.filestackapi.com/api/store/S3?key=AsbaKfmdYTGqcimFvGdYQz", {
+        method: "POST",
+
+        body: formData,
+      }) .then((response) => response.body)
+      .then((body) => {
+        const reader = body?.getReader();
+
+        console.log(reader)
+        // …
+      });
+  
+      // if (response.ok) {
+      //   console.log("Files saved successfully!");
+      //   console.log(response.body?.getReader());
+      // } else {
+      //   console.error("Failed to save files:", response.statusText);
+      // }
+    } catch (error) {
+      console.error("An error occurred while saving files:", error);
+    }
+  }
+
   return (
     <div className="px-6 pt-8 w-full h-full">
       <div className='flex w-full'>
@@ -273,7 +305,6 @@ export default function NewPendingBills() {
                       </div>
                     )
                   }
-
                 </div>
               ))
             }
@@ -296,6 +327,11 @@ export default function NewPendingBills() {
           <div className="w-full mt-4">
             <label className='text-xs font-normal'>Anexos</label>
           </div>
+          
+          {/* <PickerOverlay
+            apikey={'AsbaKfmdYTGqcimFvGdYQz'}
+            onUploadDone={(res) => console.log(res)}
+          /> */}
 
           <div className='border border-slate-200 w-full h-auto rounded mt-3 p-4'>
             <input
@@ -306,7 +342,7 @@ export default function NewPendingBills() {
             />
             {
               files.map(f => (
-                <div className="w-full flex flex-row mt-4 p-4 rounded border">
+                <div className="w-full flex flex-row mt-4 p-4 rounded border" key={f.name}>
                   <label className='text-xs w-full flex items-center font-normal'>{f.name}</label>
                   <button className='flex items-center justify-center mr-2 font-normal text-xs bg-blue-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
                     <img src={IconDownload} alt="Baixar anexo" width={20} height={20} />
@@ -323,9 +359,7 @@ export default function NewPendingBills() {
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>
           <div className='flex flex-row'>
-            <a onClick={() => {
-              console.log('teste')
-            }} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
+            <a onClick={() => handleSaveFile()} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
               Voltar
             </a>
           </div>

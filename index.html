@@ -2,14 +2,18 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <meta
+    <!-- <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self'"
-    />
+            content="
+            default-src 'self' https://www.filestackapi.com; connect-src 'self' https://www.filestackapi.com; script-src 'self' https://www.filestackapi.com;**"
+    /> -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;">
+
     <meta
             http-equiv="X-Content-Security-Policy"
             content="default-src 'self'; script-src 'self'"
     />
+   
     <link rel="stylesheet" href="/index.css" />
     <title>Hello from Electron renderer!</title>
 </head>

@@ -12,6 +12,9 @@ export default defineConfig({
         '@icon-os': '/src/public/img/os.svg',
         '@icon-financeiro': '/src/public/img/financeiro.svg',      
     }
-},
+  },
   plugins: [react()],
+  define: {
+    __INTLIFY_JIT_COMPILATION__: true
+  }
 });
