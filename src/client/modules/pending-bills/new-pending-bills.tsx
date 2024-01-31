@@ -1,26 +1,32 @@
 import IconNavigateNext from '../../../public/img/navigate-next.svg'
 import IconPlus from '../../../public/img/plus.svg'
 import IconRemove from '../../../public/img/close.svg'
+import IconDownload from '../../../public/img/download.svg'
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { trpc } from '../../util';
 import { redirect } from 'react-router-dom';
+import InputMask from 'react-input-mask';
+import { NumericFormat } from 'react-number-format';
 
 export default function NewPendingBills() {
-  // const [totalPrice, setTotalPrice] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const [alertInstallments, setAlertInstallments] = useState('');
   const createPendingBillsFormSchema = z.object({
     title: z.string().trim(),
     description: z.string().optional(),
     due_date: z.string(),
-    status: z.string(),
+    status: z.string().optional(),
     installments_quantity: z.string(),
     installments: z.array(
       z.object({
         description: z.string(),
-        is_paid: z.string(),
-        payment_date: z.string(),
+        is_paid: z.boolean().optional(),
+        payment_date: z.string().optional(),
         price: z.string()
       })
     ),
@@ -42,7 +48,15 @@ export default function NewPendingBills() {
 
   type CreatePendingBillsFormData = z.infer<typeof createPendingBillsFormSchema>
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<CreatePendingBillsFormData>({
+  const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<CreatePendingBillsFormData>({
+    defaultValues: {
+      installments: [
+        {
+          description: '',
+          price: ''
+        }
+      ]
+    },
     resolver: zodResolver(createPendingBillsFormSchema)
   })
 
@@ -54,68 +68,92 @@ export default function NewPendingBills() {
   function addNewInstallments() {
     append({
       description: '',
-      is_paid: 'teste',
+      is_paid: false,
       payment_date: '',
       price: ''
     })
   }
 
   function removeInstallments(index: number) {
-    remove(fields.length - 1)
+    const removedItem = fields[index];
+    remove(index);
+
+    const newTotalPrice = totalPrice - parseFloat(removedItem.price) || 0;
+    setTotalPrice(newTotalPrice);
   }
 
   async function createPendingBills(data: any) {
     console.log(data)
-    // if (!data.installments.find((s: any) => s.description !== '' && s.description !== '' && s.price !== '')) {
-    //   alert('É necessário adicionar pelo menos uma parcela!')
-    //   return;
-    // }
+    console.log(alertInstallments)
 
-    // try {
-    //   const result = await addPendingBills.mutateAsync({
-    //     description: data.description,
-    //     due_date: data.date,
-    //     price: data.model,
-    //     title: data.plate,
-    //   });
+    if (!data.installments.find((s: any) => s.description !== '' && s.price !== '')) {
+      setAlertInstallments('É necessário pelo menos 1 parcela.')
+      return;
+    }
 
-    //   for (const s of data.services) {
-    //     if (s.description !== '' && s.is_paid === false && s.payment_date !== '' && s.price !== '') {
-    //       await addInstallments.mutate({
-    //         description: s.description,
-    //         payment_date: s.payment_date,
-    //         is_paid: s.is_paid,
-    //         price: Number(s.price),
-    //         pending_bill_id: result.id
-    //       });
-    //     }
-    //   }
 
-    //   redirect('/')
+    try {
+      const result = await addPendingBills.mutateAsync({
+        description: data.description,
+        due_date: data.due_date,
+        price: Number(data.installments.map((i: any) => Number(i.price)).reduce((a: any, t: any) => Number(a) + Number(t), 0)),
+        title: data.title,
+      });
 
-    // } catch (error) {
-    //   console.error('Erro ao criar OS:', error);
-    //   // Lidar com o erro, se necessário
-    // }
+      for (const s of data.installments) {
+        if (s.description !== '' && s.price !== '') {
+          await addInstallments.mutate({
+            description: s.description,
+            payment_date: s.payment_date,
+            is_paid: s.is_paid,
+            price: Number(s.price),
+            pending_bill_id: result.id
+          });
+        }
+      }
+
+      redirect('/')
+
+    } catch (error) {
+      console.error('Erro ao criar OS:', error);
+      // Lidar com o erro, se necessário
+    }
   }
 
-  useEffect(() => {
-    append({
-      description: '',
-      is_paid: 'teste',
-      payment_date: '',
-      price: ''
-    })
+  function handlePriceChange(index: number, value: string) {
+    const numericString = value.replace(/[^\d,.-]/g, '');
+    const dotString = numericString.replace(',', '.');
+    const newValue = parseFloat(dotString) || 0;
 
-  }, [append])
+    setValue(`installments.${index}.price`, newValue.toFixed(2), { shouldValidate: true });
 
-  // const totalPrice = fields.reduce((acc, curr) => acc + Number(curr.price) * Number(curr.quantity), 0);
+    const watchedInstallments = watch("installments");
+
+    const newTotalPrice = watchedInstallments.reduce((accumulator, current) => {
+      const price = parseFloat(current.price) || 0;
+      return accumulator + price;
+    }, 0);
+
+    setTotalPrice(Number(newTotalPrice.toFixed(2)));
+  }
+
+  function formatCurrency(value: any) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = event.target.files;
+    if (selectedFiles) {
+      const filesArray: File[] = Array.from(selectedFiles);
+      setFiles([...files, ...filesArray]);
+    }
+  };
 
   return (
     <div className="px-6 pt-8 w-full h-full">
       <div className='flex w-full'>
         <div className="w-full h-10 bg-white rounded pl-4 flex flex-row items-center font-semibold text-xs">
-          <a href={'/'} className='hover:text-slate-500' >Contas a Pagar</a>
+          <a href={'/contas-pagar'} className='hover:text-slate-500' >Contas a Pagar</a>
           <div>
             <img src={IconNavigateNext} alt=">" width={16} height={16} />
           </div>
@@ -147,7 +185,8 @@ export default function NewPendingBills() {
             </div>
             <div className='w-full flex flex-col'>
               <label className='mb-3'>Data de Vencimento<span className='text-red-500'>*</span></label>
-              <input
+              <InputMask
+                mask="99/99/9999"
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
                 {...register('due_date')}
@@ -160,7 +199,7 @@ export default function NewPendingBills() {
 
           <div className='flex flex-row font-normal text-xs gap-4 mt-4'>
             <div className='w-full flex flex-col'>
-              <label className='mb-3'>Parcelas <span className='text-red-500'>*</span></label>
+              <label className='mb-3'>Numero de parcelas <span className='text-red-500'>*</span></label>
               <input
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
@@ -170,17 +209,6 @@ export default function NewPendingBills() {
                 errors.installments_quantity && <span className='text-[10px] mt-2 text-red-500'>{errors.installments_quantity?.message}</span>
               }
             </div>
-            {/* <div className='w-full flex flex-col'>
-              <label className='mb-3'>Anexos <span className='text-red-500'>*</span></label>
-              <input
-                type="text"
-                className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                {...register('')}
-              />
-              {
-                errors.model && <span className='text-[10px] mt-2 text-red-500'>{errors.model?.message}</span>
-              }
-            </div> */}
           </div>
 
           <div className="w-full mt-4">
@@ -198,7 +226,7 @@ export default function NewPendingBills() {
                       {...register(`installments.${index}.description`)}
                     />
                   </div>
-                  <div className='w-full flex flex-col'>
+                  <div className='w-[100px] flex flex-col'>
                     <label className='mb-3'>Paga</label>
                     <input
                       type="checkbox"
@@ -208,7 +236,8 @@ export default function NewPendingBills() {
                   </div>
                   <div className='w-full flex flex-col'>
                     <label className='mb-3'>Data de Pagamento</label>
-                    <input
+                    <InputMask
+                      mask="99/99/9999"
                       type="text"
                       className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
                       {...register(`installments.${index}.payment_date`)}
@@ -216,10 +245,15 @@ export default function NewPendingBills() {
                   </div>
                   <div className='w-full flex flex-col'>
                     <label className='mb-3'>Valor</label>
-                    <input
-                      type="text"
+                    <NumericFormat
+                      thousandSeparator='.'
+                      decimalSeparator=','
+                      prefix='R$ '
+                      allowNegative={false}
                       className='w-[550px] h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                      {...register(`installments.${index}.price`)}
+                      {...register(`installments.${index}.price`, {
+                        onChange: (e) => handlePriceChange(index, e.target.value),
+                      })}
                     />
                   </div>
                   {
@@ -243,19 +277,49 @@ export default function NewPendingBills() {
                 </div>
               ))
             }
+            {
+              alertInstallments !== '' && <span className='text-[10px] mt-2 text-red-500'>{alertInstallments}</span>
+            }
           </div>
 
-          {/* <div className='flex font-normal mt-3 text-xs gap-4 mb-3 justify-end mr-16'>
+          <div className='flex font-normal mt-3 text-xs gap-4 mb-3 justify-end mr-16'>
             <div className='flex flex-col'>
               <label className='mb-3'>Valor Total</label>
               <input
-                type="text"
                 readOnly
-                value={totalPrice}
+                value={formatCurrency(totalPrice)}
                 className='w-[550px] h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
               />
             </div>
-          </div> */}
+          </div>
+
+          <div className="w-full mt-4">
+            <label className='text-xs font-normal'>Anexos</label>
+          </div>
+
+          <div className='border border-slate-200 w-full h-auto rounded mt-3 p-4'>
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className='w-full h-8 p-1 border-slate-200 focus:outline-slate-300'
+            // {...register('')}
+            />
+            {
+              files.map(f => (
+                <div className="w-full flex flex-row mt-4 p-4 rounded border">
+                  <label className='text-xs w-full flex items-center font-normal'>{f.name}</label>
+                  <button className='flex items-center justify-center mr-2 font-normal text-xs bg-blue-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
+                    <img src={IconDownload} alt="Baixar anexo" width={20} height={20} />
+                  </button>
+                  <button className='flex items-center justify-center font-normal text-xs bg-red-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
+                    <img src={IconRemove} alt="Remover arquivo" width={8} height={8} />
+                  </button>
+                </div>
+              ))
+            }
+
+          </div>
+
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>
           <div className='flex flex-row'>

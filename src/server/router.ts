@@ -170,7 +170,7 @@ export const appRouter = t.router({
     .input(z.object({
       title: z.string().trim().min(1, 'Descrição é obrigatória'),
       due_date: z.string().trim().min(1, 'Descrição é obrigatória'),
-      description: z.string().trim().min(1, 'Descrição é obrigatória'),
+      description: z.string().trim(),
       price: z.number().min(1, 'Preço é obrigatório!'),
     }))
     .mutation(async ({ input: { description, price, title, due_date } }) => {
