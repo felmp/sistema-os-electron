@@ -87,13 +87,11 @@ export default function EditOs() {
 
   function removeService(index: number) {
     setDeletedServices((prevDeletedServices) => [...prevDeletedServices, fields[index].cod ?? '']);
-    console.log(fields[index])
 
     remove(index)
   }
 
   async function handlerUpdateOs(data: any) {
-    console.log(data)
     if (!data.services.find((s: any) => s.description !== '' && s.description !== '' && s.price !== '')) {
       setMinService(true)
       return;

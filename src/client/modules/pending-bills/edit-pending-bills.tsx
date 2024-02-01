@@ -7,20 +7,21 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { trpc } from '../../util';
-import { redirect } from 'react-router-dom';
 import InputMask from 'react-input-mask';
 import { NumericFormat } from 'react-number-format';
-import { PickerOverlay } from 'filestack-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 
-export default function NewPendingBills() {
+export default function EditPendingBills() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [totalPrice, setTotalPrice] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
+  const [deletedInstallments, setDeletedInstallments] = useState<string[]>([]);
+
 
   const [alertInstallments, setAlertInstallments] = useState('');
-  const createPendingBillsFormSchema = z.object({
+  const editPendingBillsFormSchema = z.object({
     title: z.string().trim(),
     description: z.string().optional(),
     due_date: z.string(),
@@ -37,12 +38,20 @@ export default function NewPendingBills() {
   })
 
   const utils = trpc.useContext();
-  const pending_bills = trpc.pendingBills.useQuery();
-  const addPendingBills = trpc.pendingBillCreate.useMutation({
-    onSuccess: (e) => {
+  const pendingBill = trpc.pendingBillById.useQuery(id || '');
+  const installments = trpc.installmentByPendingBillId.useQuery(id || '');
+
+  const updatePendingBills = trpc.pendingBillUpdate.useMutation({
+    onSuccess: () => {
       utils.pendingBills.invalidate();
     }
-  });
+  })
+
+  const deletePendingBills = trpc.pendingBillDelete.useMutation({
+    onSuccess: () => {
+      utils.pendingBills.invalidate();
+    }
+  })
 
   const addInstallments = trpc.installmentCreate.useMutation({
     onSuccess: () => {
@@ -50,18 +59,22 @@ export default function NewPendingBills() {
     }
   })
 
-  type CreatePendingBillsFormData = z.infer<typeof createPendingBillsFormSchema>
+  const updateInstallments = trpc.installmentsUpdate.useMutation({
+    onSuccess: () => {
+      utils.installments.invalidate();
+    }
+  })
 
-  const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<CreatePendingBillsFormData>({
-    defaultValues: {
-      installments: [
-        {
-          description: '',
-          price: ''
-        }
-      ]
-    },
-    resolver: zodResolver(createPendingBillsFormSchema)
+  const deleteInstallments = trpc.installmentDelete.useMutation({
+    onSuccess: () => {
+      utils.installments.invalidate();
+    }
+  })
+
+  type CreatePendingBillsFormData = z.infer<typeof editPendingBillsFormSchema>
+
+  const { register, handleSubmit, control, formState: { errors }, setValue, watch, reset } = useForm<CreatePendingBillsFormData>({
+    resolver: zodResolver(editPendingBillsFormSchema)
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -86,7 +99,7 @@ export default function NewPendingBills() {
     setTotalPrice(newTotalPrice);
   }
 
-  async function createPendingBills(data: any) {
+  async function editPendingBills(data: any) {
     console.log(data)
     console.log(alertInstallments)
 
@@ -95,7 +108,8 @@ export default function NewPendingBills() {
       return;
     }
 
-    const result = await addPendingBills.mutateAsync({
+    const result = await updatePendingBills.mutateAsync({
+      id: id || '',
       description: data.description,
       due_date: data.due_date,
       price: Number(data.installments.map((i: any) => Number(i.price)).reduce((a: any, t: any) => Number(a) + Number(t), 0)),
@@ -104,17 +118,39 @@ export default function NewPendingBills() {
 
     for (const s of data.installments) {
       if (s.description !== '' && s.price !== '') {
-        await addInstallments.mutate({
-          description: s.description,
-          payment_date: s.payment_date,
-          is_paid: s.is_paid,
-          price: Number(s.price),
-          pending_bill_id: result.id
-        });
+        if (s.cod === '') {
+          await addInstallments.mutate({
+            description: s.description,
+            payment_date: s.payment_date,
+            is_paid: s.is_paid,
+            price: Number(s.price),
+            pending_bill_id: result.id
+          });
+        } else {
+          await updateInstallments.mutate({
+            id: Number(s.cod),
+            description: s.description,
+            payment_date: s.payment_date,
+            is_paid: s.is_paid,
+            price: Number(s.price),
+            pending_bill_id: result.id
+          })
+        }
+      }
+    }
+
+    for (const deletedInstallmentId of deletedInstallments) {
+      if (deletedInstallmentId !== '') {
+        await deleteInstallments.mutate(deletedInstallmentId)
       }
     }
 
     navigate('/contas-pagar')
+  }
+
+  async function handleDeletePendingBills() {
+    await deletePendingBills.mutate(id || '')
+    navigate('/contas-pagar');
   }
 
   function handlePriceChange(index: number, value: string) {
@@ -133,6 +169,23 @@ export default function NewPendingBills() {
 
     setTotalPrice(Number(newTotalPrice.toFixed(2)));
   }
+
+  useEffect(() => {
+    if (pendingBill.data && installments.data) {
+      reset({
+        description: pendingBill.data.description || '',
+        due_date: pendingBill.data.due_date,
+        title: pendingBill.data.title,
+        installments: installments.data.map((installment) => ({
+          cod: installment.id.toString(),
+          description: 'installment.description',
+          is_paid: installment.is_paid,
+          payment_date: installment.payment_date,
+          price: installment.price.toString(),
+        })),
+      });
+    }
+  }, [pendingBill.data, pendingBill.data, reset]);
 
   function formatCurrency(value: any) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -188,7 +241,7 @@ export default function NewPendingBills() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(createPendingBills)}>
+      <form onSubmit={handleSubmit(editPendingBills)}>
         <div className='w-full h-auto mb-3 mt-4 bg-white rounded p-4'>
           <div className='flex flex-row font-normal text-xs gap-4'>
             <div className='w-full flex flex-col'>

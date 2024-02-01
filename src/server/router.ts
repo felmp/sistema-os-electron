@@ -58,7 +58,6 @@ export const appRouter = t.router({
 
       return deletedOs;
     }),
-
   osUpdate: t.procedure
     .input(z.object({
       id: z.string(),
@@ -158,11 +157,11 @@ export const appRouter = t.router({
       return prisma.pendingBills.findMany();
     }),
   pendingBillById: t.procedure
-    .input(z.number().int())
+    .input(z.string())
     .query(({ input: id }) => {
       return prisma.pendingBills.findUnique({
         where: {
-          id,
+          id: Number(id),
         }
       })
     }),
@@ -185,19 +184,59 @@ export const appRouter = t.router({
 
       return pendingBills;
     }),
+  pendingBillDelete: t.procedure
+    .input(z.string())
+    .mutation(async ({ input: id }) => {
+      const deletedPendingBill = await prisma.pendingBills.delete({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      return deletedPendingBill;
+    }),
+  pendingBillUpdate: t.procedure
+    .input(z.object({
+      id: z.string(),
+      title: z.string().trim().min(1, 'Descrição é obrigatória'),
+      due_date: z.string().trim().min(1, 'Descrição é obrigatória'),
+      description: z.string().trim(),
+      price: z.number().min(1, 'Preço é obrigatório!'),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...updatedFields } = input;
+
+      const updatedPendingBill = await prisma.pendingBills.update({
+        where: {
+          id: Number(id),
+        },
+        data: updatedFields,
+      });
+
+      return updatedPendingBill;
+    }),
   installments: t.procedure
     .query(() => {
       return prisma.installments.findMany();
     }),
   installmentById: t.procedure
-    .input(z.number().int())
+    .input(z.string())
     .query(({ input: id }) => {
       return prisma.installments.findUnique({
         where: {
-          id,
+          id: Number(id),
         }
       })
     }),
+  installmentByPendingBillId: t.procedure
+  .input(z.string())
+  .query(({ input: id }) => {
+    return prisma.installments.findMany({
+      where: {
+        pending_bill_id: Number(id),
+      }
+    })
+  }),
   installmentCreate: t.procedure
     .input(z.object({
       is_paid: z.boolean(),
@@ -217,7 +256,39 @@ export const appRouter = t.router({
       });
 
       return installments;
-    })
+    }),
+  installmentsUpdate: t.procedure
+    .input(z.object({
+      id: z.number().int(),
+      is_paid: z.boolean().optional(),
+      payment_date: z.string().trim().optional(),
+      description: z.string().trim().optional(),
+      pending_bill_id: z.number().optional(),
+      price: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...updatedFields } = input;
+
+      const updatedInstallments = await prisma.installments.update({
+        where: {
+          id,
+        },
+        data: updatedFields,
+      });
+
+      return updatedInstallments;
+    }),
+  installmentDelete: t.procedure
+    .input(z.string())
+    .mutation(async ({ input: id }) => {
+      const deletedInstallment = await prisma.installments.delete({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      return deletedInstallment;
+    }),
 });
 
 export type AppRouter = typeof appRouter;

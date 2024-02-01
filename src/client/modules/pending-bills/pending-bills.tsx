@@ -6,9 +6,10 @@ import IconStickyNote from '../../../public/img/sticky-note.svg'
 import { StatusOS } from '../../components/status-os'
 import { useState } from 'react';
 import { trpc } from '../../util';
-// import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 
 export default function PendingBills() {
+  const navigate = useNavigate();
   const [titleFilter, setTitleFilter] = useState('');
   const [priceFilter, setPriceFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,7 +21,8 @@ export default function PendingBills() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
   const handlePendingBillsDetails = (id: number) => {
-    console.log(id)
+    navigate(`${id}`)
+
   };
 
   const filteredPendingBills = (titleFilter !== '')

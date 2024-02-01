@@ -11,6 +11,7 @@ import NewOs from './modules/os/new-os';
 import PendingBills from './modules/pending-bills/pending-bills';
 import NewPendingBills from './modules/pending-bills/new-pending-bills';
 import EditOs from './modules/os/edit-os';
+import EditPendingBills from './modules/pending-bills/edit-pending-bills';
 
 function App() {
   const router = createBrowserRouter([
@@ -33,6 +34,10 @@ function App() {
     {
       path: "contas-pagar/cadastro",
       element: <NewPendingBills />,
+    },
+    {
+      path: "contas-pagar/:id",
+      element: <EditPendingBills />
     }
   ]);
 
