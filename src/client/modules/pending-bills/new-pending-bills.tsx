@@ -7,10 +7,8 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { trpc } from '../../util';
-import { redirect } from 'react-router-dom';
 import InputMask from 'react-input-mask';
 import { NumericFormat } from 'react-number-format';
-import { PickerOverlay } from 'filestack-react';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -24,8 +22,8 @@ export default function NewPendingBills() {
     title: z.string().trim(),
     description: z.string().optional(),
     due_date: z.string(),
-    status: z.string().optional(),
     installments_quantity: z.string(),
+    status: z.string().optional(),
     installments: z.array(
       z.object({
         description: z.string(),
@@ -87,9 +85,6 @@ export default function NewPendingBills() {
   }
 
   async function createPendingBills(data: any) {
-    console.log(data)
-    console.log(alertInstallments)
-
     if (!data.installments.find((s: any) => s.description !== '' && s.price !== '')) {
       setAlertInstallments('É necessário pelo menos 1 parcela.')
       return;
@@ -97,9 +92,11 @@ export default function NewPendingBills() {
 
     const result = await addPendingBills.mutateAsync({
       description: data.description,
+      installments_quantity: Number(data.installments_quantity),
       due_date: data.due_date,
       price: Number(data.installments.map((i: any) => Number(i.price)).reduce((a: any, t: any) => Number(a) + Number(t), 0)),
       title: data.title,
+      status: data.installments.some((e: any) => e.is_paid == false) ? 'pending' : 'paid'
     });
 
     for (const s of data.installments) {

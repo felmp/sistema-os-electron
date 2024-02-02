@@ -171,14 +171,18 @@ export const appRouter = t.router({
       due_date: z.string().trim().min(1, 'Descrição é obrigatória'),
       description: z.string().trim(),
       price: z.number().min(1, 'Preço é obrigatório!'),
+      installments_quantity: z.number().min(1, 'Quantidade é obrigatória!'),
+      status: z.string().min(1, 'Stauts é obrigatório!'),
     }))
-    .mutation(async ({ input: { description, price, title, due_date } }) => {
+    .mutation(async ({ input: { description, installments_quantity, price, title, due_date, status } }) => {
       const pendingBills = await prisma.pendingBills.create({
         data: {
           description,
           price,
           title,
-          due_date
+          due_date,
+          installments_quantity,
+          status,
         }
       });
 
@@ -198,10 +202,12 @@ export const appRouter = t.router({
   pendingBillUpdate: t.procedure
     .input(z.object({
       id: z.string(),
-      title: z.string().trim().min(1, 'Descrição é obrigatória'),
-      due_date: z.string().trim().min(1, 'Descrição é obrigatória'),
+      title: z.string().trim().min(1, 'Titulo é obrigatório'),
+      due_date: z.string().trim().min(1, 'Vencimento é obrigatório'),
       description: z.string().trim(),
       price: z.number().min(1, 'Preço é obrigatório!'),
+      installments_quantity: z.number().min(1, 'Quantidade é obrigatória!'),
+      status: z.string().min(1, 'Stauts é obrigatório!'),
     }))
     .mutation(async ({ input }) => {
       const { id, ...updatedFields } = input;
@@ -241,9 +247,9 @@ export const appRouter = t.router({
     .input(z.object({
       is_paid: z.boolean(),
       payment_date: z.string().trim(),
-      description: z.string().trim().min(1, 'Descrição é obrigatória'),
       pending_bill_id: z.number(),
       price: z.number().min(1, 'Preço é obrigatório!'),
+      description: z.string().trim().min(1, 'Descrição é obrigatória'),
     }))
     .mutation(async ({ input: { description, price, payment_date, is_paid, pending_bill_id } }) => {
       const installments = await prisma.installments.create({
@@ -251,7 +257,8 @@ export const appRouter = t.router({
           is_paid,
           payment_date,
           price,
-          pending_bill_id
+          pending_bill_id,
+          description,
         }
       });
 

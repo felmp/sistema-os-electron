@@ -34,17 +34,20 @@ model Service {
 }
 
 model PendingBills {
-  id          Int    @id @default(autoincrement())
-  title       String
-  description String
-  due_date    String
-  price       Float
+  id                    Int    @id @default(autoincrement())
+  title                 String
+  description           String
+  due_date              String
+  price                 Float
+  status                String
+  installments_quantity Int
 
   Installments Installments[]
 }
 
 model Installments {
   id           Int          @id @default(autoincrement())
+  description  String
   is_paid      Boolean
   payment_date String
   price        Float

@@ -5,7 +5,7 @@ import IconDownload from '../../../public/img/download.svg'
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { trpc } from '../../util';
 import InputMask from 'react-input-mask';
 import { NumericFormat } from 'react-number-format';
@@ -29,6 +29,7 @@ export default function EditPendingBills() {
     installments_quantity: z.string(),
     installments: z.array(
       z.object({
+        cod: z.string().optional(),
         description: z.string(),
         is_paid: z.boolean().optional(),
         payment_date: z.string().optional(),
@@ -74,6 +75,14 @@ export default function EditPendingBills() {
   type CreatePendingBillsFormData = z.infer<typeof editPendingBillsFormSchema>
 
   const { register, handleSubmit, control, formState: { errors }, setValue, watch, reset } = useForm<CreatePendingBillsFormData>({
+    defaultValues: {
+      title: '',
+      description: '',
+      due_date: '',
+      status: '',
+      installments_quantity: '',
+      installments: [],  // Set default value for installments array
+    },
     resolver: zodResolver(editPendingBillsFormSchema)
   })
 
@@ -84,6 +93,7 @@ export default function EditPendingBills() {
 
   function addNewInstallments() {
     append({
+      cod: '',
       description: '',
       is_paid: false,
       payment_date: '',
@@ -93,8 +103,10 @@ export default function EditPendingBills() {
 
   function removeInstallments(index: number) {
     const removedItem = fields[index];
+    setDeletedInstallments((prevDeletedInstallments) => [...prevDeletedInstallments, fields[index].cod ?? '']);
+    
+    
     remove(index);
-
     const newTotalPrice = totalPrice - parseFloat(removedItem.price) || 0;
     setTotalPrice(newTotalPrice);
   }
@@ -111,6 +123,8 @@ export default function EditPendingBills() {
     const result = await updatePendingBills.mutateAsync({
       id: id || '',
       description: data.description,
+      status: data.installments.some((e: any) => e.is_paid == false) ? 'pending' : 'paid',
+      installments_quantity: Number(data.installments_quantity),
       due_date: data.due_date,
       price: Number(data.installments.map((i: any) => Number(i.price)).reduce((a: any, t: any) => Number(a) + Number(t), 0)),
       title: data.title,
@@ -140,6 +154,7 @@ export default function EditPendingBills() {
     }
 
     for (const deletedInstallmentId of deletedInstallments) {
+      console.log(deletedInstallmentId)
       if (deletedInstallmentId !== '') {
         await deleteInstallments.mutate(deletedInstallmentId)
       }
@@ -172,20 +187,42 @@ export default function EditPendingBills() {
 
   useEffect(() => {
     if (pendingBill.data && installments.data) {
-      reset({
+      const formattedData = {
+        title: pendingBill.data.title,
         description: pendingBill.data.description || '',
         due_date: pendingBill.data.due_date,
-        title: pendingBill.data.title,
+        status: pendingBill.data.status || '',
+        installments_quantity: pendingBill.data.installments_quantity.toString(),
         installments: installments.data.map((installment) => ({
           cod: installment.id.toString(),
-          description: 'installment.description',
+          description: installment.description,
           is_paid: installment.is_paid,
-          payment_date: installment.payment_date,
+          payment_date: installment.payment_date || '',
           price: installment.price.toString(),
         })),
-      });
+      };
+
+      reset(formattedData);
+
+      setTotalPrice(installments.data.map(i => i.price).reduce((a, t) => a + t, 0))
     }
-  }, [pendingBill.data, pendingBill.data, reset]);
+
+  }, [pendingBill.data, installments.data, setValue]);
+
+  const handleIsPaidChange = (e: any, index: number) => {
+    const isPaid = e.target.checked;
+    setValue(`installments.${index}.is_paid`, isPaid);
+
+    if (isPaid) {
+      const currentDate = new Date();
+      const formattedDate = `${String(currentDate.getDate()).padStart(2, '0')}/${String(
+        currentDate.getMonth() + 1
+      ).padStart(2, '0')}/${currentDate.getFullYear()}`;
+
+      setValue(`installments.${index}.payment_date`, formattedDate);
+    }
+  };
+
 
   function formatCurrency(value: any) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -202,22 +239,22 @@ export default function EditPendingBills() {
   async function handleSaveFile() {
     try {
       const formData = new FormData();
-  
+
       files.forEach((file, index) => {
         formData.append(`file${index + 1}`, file);
       });
-  
+
       await fetch("https://www.filestackapi.com/api/store/S3?key=AsbaKfmdYTGqcimFvGdYQz", {
         method: "POST",
 
         body: formData,
-      }) .then((response) => response.body)
-      .then((body) => {
-        const reader = body?.getReader();
+      }).then((response) => response.body)
+        .then((body) => {
+          const reader = body?.getReader();
 
-        console.log(reader)
-      });
-  
+          console.log(reader)
+        });
+
       // if (response.ok) {
       //   console.log("Files saved successfully!");
       //   console.log(response.body?.getReader());
@@ -267,6 +304,7 @@ export default function EditPendingBills() {
               <label className='mb-3'>Data de Vencimento<span className='text-red-500'>*</span></label>
               <InputMask
                 mask="99/99/9999"
+                value={watch('due_date')}
                 type="text"
                 className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
                 {...register('due_date')}
@@ -311,7 +349,9 @@ export default function EditPendingBills() {
                     <input
                       type="checkbox"
                       className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
-                      {...register(`installments.${index}.is_paid`)}
+                      {...register(`installments.${index}.is_paid`, {
+                        onChange: (e) => handleIsPaidChange(e, index),
+                      })}
                     />
                   </div>
                   <div className='w-full flex flex-col'>
@@ -319,6 +359,7 @@ export default function EditPendingBills() {
                     <InputMask
                       mask="99/99/9999"
                       type="text"
+                      value={watch(`installments.${index}.payment_date`)}
                       className='w-full h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
                       {...register(`installments.${index}.payment_date`)}
                     />
@@ -330,6 +371,7 @@ export default function EditPendingBills() {
                       decimalSeparator=','
                       prefix='R$ '
                       allowNegative={false}
+                      value={watch(`installments.${index}.price`)}
                       className='w-[550px] h-[32px] rounded pl-2 border border-slate-200 focus:outline-slate-300'
                       {...register(`installments.${index}.price`, {
                         onChange: (e) => handlePriceChange(index, e.target.value),
@@ -372,14 +414,14 @@ export default function EditPendingBills() {
             </div>
           </div>
 
-          <div className="w-full mt-4">
+          {/* <div className="w-full mt-4">
             <label className='text-xs font-normal'>Anexos</label>
           </div>
-          
-          {/* <PickerOverlay
+
+          <PickerOverlay
             apikey={'AsbaKfmdYTGqcimFvGdYQz'}
             onUploadDone={(res) => console.log(res)}
-          /> */}
+          />
 
           <div className='border border-slate-200 w-full h-auto rounded mt-3 p-4'>
             <input
@@ -401,7 +443,7 @@ export default function EditPendingBills() {
               ))
             }
 
-          </div>
+          </div> */}
 
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>

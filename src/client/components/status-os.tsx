@@ -9,3 +9,12 @@ export function StatusOS(props: StatusOSProps) {
     </div>
   )
 }
+
+
+export function StatusPendingBill(props: StatusOSProps) {
+  return (
+    <div className="w-20 h-5 bg-red-300 rounded flex items-center justify-center font-normal text-xs">
+      {props.status === 'pending' ? 'Pendente' : props.status === 'paid' ? 'Pago' : 'Reprovado'}
+    </div>
+  )
+}
