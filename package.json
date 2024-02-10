@@ -11,11 +11,12 @@
     "dist": "npm run build && electron-builder",
     "publish": "npm run build && dotenv -- electron-builder -p always"
   },
-  "author": "Ayron Wohletz",
+  "author": "Crió - 2024",
   "license": "ISC",
   "devDependencies": {
     "@types/filestack-react": "^4.0.4",
     "@types/node": "^18.11.17",
+    "@types/pdfmake": "^0.2.9",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.9",
     "@types/react-input-mask": "^3.0.5",
@@ -45,6 +46,7 @@
     "@trpc/server": "^10.5.0",
     "electron-log": "^4.4.8",
     "filestack-react": "^5.0.0",
+    "pdfmake": "^0.2.9",
     "prisma": "^4.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

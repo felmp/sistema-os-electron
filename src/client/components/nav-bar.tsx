@@ -1,17 +1,24 @@
-import IconOS from "../../public/img/os.svg"
-import IconFinanceiro from "../../public/img/financeiro.svg"
+import { useLocation, Link, Router, useNavigate } from "react-router-dom";
+import IconFinanceiro from "../../public/img/pending-bills.png"
+import IconOS from "../../public/img/services.png"
 
 export function NavBar() {
-// ${pathname === '/' ? 'bg-slate-500' : 'bg-slate-200 hover:bg-slate-300'}
+  const navigate = useNavigate();
+
+  // const location = useLocation();
+
+  // const isOSRoute = location.pathname === "/";
+  // const isContasPagarRoute = location.pathname === "/contas-pagar";
+
   return (
     <nav className="flex flex-col items-center pt-8 space-y-4 bg-white w-[92px]">
-      <a href="/" className={`w-10 h-10 flex justify-center items-center border rounded `}>
-        <img src={IconOS} alt="Botão de OS" width={8} height={8} />
-      </a>
+      <button onClick={() => navigate('/')} className={`w-12 h-12 flex justify-center items-center bg-slate-600 border rounded `}>
+        <img src={IconOS} alt="Botão de OS" />
+      </button>
 
-      <a href="/contas-pagar" className={`w-10 h-10 flex justify-center items-center border rounded `}>
-        <img src={IconFinanceiro} alt="Botão de Financeiro" width={22.89} height={20.34} />
-      </a>
+      <button onClick={() => navigate("/contas-pagar")} className={`w-12 h-12 flex justify-center items-center bg-slate-600 border rounded `}>
+        <img src={IconFinanceiro} alt="Botão de Financeiro" />
+      </button>
     </nav>
   )
 }

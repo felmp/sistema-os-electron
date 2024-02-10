@@ -269,18 +269,18 @@ export default function EditPendingBills() {
   return (
     <div className="px-6 pt-8 w-full h-full">
       <div className='flex w-full'>
-        <div className="w-full h-10 bg-white rounded pl-4 flex flex-row items-center font-semibold text-xs">
-          <a href={'/contas-pagar'} className='hover:text-slate-500' >Contas a Pagar</a>
+        <div className="w-full h-10 bg-white rounded pl-4 flex flex-row items-center font-semibold ">
+          <button onClick={() => navigate('/contas-pagar')} className='hover:text-slate-500' >Contas a Pagar</button>
           <div>
             <img src={IconNavigateNext} alt=">" width={16} height={16} />
           </div>
-          <h1>Novo</h1>
+          <h1>Editar</h1>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(editPendingBills)}>
         <div className='w-full h-auto mb-3 mt-4 bg-white rounded p-4'>
-          <div className='flex flex-row font-normal text-xs gap-4'>
+          <div className='flex flex-row font-normal  gap-4'>
             <div className='w-full flex flex-col'>
               <label className='mb-3'>Titulo <span className='text-red-500'>*</span></label>
               <input
@@ -315,7 +315,7 @@ export default function EditPendingBills() {
             </div>
           </div>
 
-          <div className='flex flex-row font-normal text-xs gap-4 mt-4'>
+          <div className='flex flex-row font-normal  gap-4 mt-4'>
             <div className='w-full flex flex-col'>
               <label className='mb-3'>Numero de parcelas <span className='text-red-500'>*</span></label>
               <input
@@ -330,12 +330,12 @@ export default function EditPendingBills() {
           </div>
 
           <div className="w-full mt-4">
-            <label className='text-xs font-normal'>Parcelas</label>
+            <label className=' font-normal'>Parcelas</label>
           </div>
           <div className='border border-slate-200 w-full h-auto rounded mt-3 p-4'>
             {
               fields.map((field, index) => (
-                <div className='flex flex-row font-normal text-xs gap-4 mb-3' key={field.id}>
+                <div className='flex flex-row font-normal  gap-4 mb-3' key={field.id}>
                   <div className='w-full flex flex-col'>
                     <label className='mb-3'>Descrição</label>
                     <input
@@ -382,14 +382,14 @@ export default function EditPendingBills() {
                     fields.length == index + 1 ? (
                       <div className='w-[20%] flex flex-col justify-end'>
                         <label className='mb-3'>&nbsp;</label>
-                        <button className='flex items-center justify-center font-normal text-xs text-white w-full h-8 bg-teal-400 rounded' type='button' onClick={addNewInstallments}>
+                        <button className='flex items-center justify-center font-normal  text-white w-full h-8 bg-teal-400 rounded' type='button' onClick={addNewInstallments}>
                           <img src={IconPlus} alt="Adicionar parcelas" width={8} height={8} />
                         </button>
                       </div>
                     ) : (
                       <div className='w-[20%] flex flex-col justify-end'>
                         <label className='mb-3'>&nbsp;</label>
-                        <button className='flex items-center justify-center font-normal text-xs bg-red-600 text-white w-full h-8 rounded' type='button' onClick={() => removeInstallments(index)}>
+                        <button className='flex items-center justify-center font-normal  bg-red-600 text-white w-full h-8 rounded' type='button' onClick={() => removeInstallments(index)}>
                           <img src={IconRemove} alt="Remover parcelas" width={8} height={8} />
                         </button>
                       </div>
@@ -403,7 +403,7 @@ export default function EditPendingBills() {
             }
           </div>
 
-          <div className='flex font-normal mt-3 text-xs gap-4 mb-3 justify-end mr-16'>
+          <div className='flex font-normal mt-3  gap-4 mb-3 justify-end mr-16'>
             <div className='flex flex-col'>
               <label className='mb-3'>Valor Total</label>
               <input
@@ -415,7 +415,7 @@ export default function EditPendingBills() {
           </div>
 
           {/* <div className="w-full mt-4">
-            <label className='text-xs font-normal'>Anexos</label>
+            <label className=' font-normal'>Anexos</label>
           </div>
 
           <PickerOverlay
@@ -432,11 +432,11 @@ export default function EditPendingBills() {
             {
               files.map(f => (
                 <div className="w-full flex flex-row mt-4 p-4 rounded border" key={f.name}>
-                  <label className='text-xs w-full flex items-center font-normal'>{f.name}</label>
-                  <button className='flex items-center justify-center mr-2 font-normal text-xs bg-blue-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
+                  <label className=' w-full flex items-center font-normal'>{f.name}</label>
+                  <button className='flex items-center justify-center mr-2 font-normal  bg-blue-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
                     <img src={IconDownload} alt="Baixar anexo" width={20} height={20} />
                   </button>
-                  <button className='flex items-center justify-center font-normal text-xs bg-red-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
+                  <button className='flex items-center justify-center font-normal  bg-red-600 text-white w-10 h-10 rounded' type='button' onClick={() => files}>
                     <img src={IconRemove} alt="Remover arquivo" width={8} height={8} />
                   </button>
                 </div>
@@ -448,12 +448,17 @@ export default function EditPendingBills() {
         </div>
         <div className='h-10 w-full flex-row flex justify-between'>
           <div className='flex flex-row'>
-            <a onClick={() => handleSaveFile()} className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
+            <button onClick={() => navigate('/contas-pagar')}  className='flex items-center justify-center font-normal  text-white w-[69px] h-10 p-4 bg-slate-500 rounded'>
               Voltar
-            </a>
+            </button>
           </div>
           <div className='flex flex-row'>
-            <button className='flex items-center justify-center font-normal text-xs text-white w-[69px] h-10 p-4 bg-teal-400 rounded' type='submit' >
+            <button onClick={() => handleDeletePendingBills()} className='flex items-center justify-center font-normal  text-white w-[69px] h-10 p-4 bg-red-500 rounded'>
+              Deletar
+            </button>
+          </div>
+          <div className='flex flex-row'>
+            <button className='flex items-center justify-center font-normal  text-white w-[69px] h-10 p-4 bg-teal-400 rounded' type='submit' >
               Salvar
             </button>
           </div>

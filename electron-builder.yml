@@ -1,4 +1,4 @@
-productName: ElectronPrismaTrpcExample
+productName: Sistema de Os e Financeiro
 appId: com.funtoimagine.electron-prisma-trpc-example
 copyright: Copyright 2022 Ayron Wohletz
 afterSign: notarize.js
@@ -43,6 +43,7 @@ win:
   publisherName: Fun to Imagine LLC
   signAndEditExecutable: true
   verifyUpdateCodeSignature: true
+  icon: 'services.ico'
   # had to add artifactName here because electron-builder was generating latest.yml with hyphens instead of spaces,
   # which screwed up auto updates
   artifactName: ${productName}-Setup-${version}.${ext}

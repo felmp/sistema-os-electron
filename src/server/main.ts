@@ -75,6 +75,8 @@ const createWindow = async () => {
   const win = new BrowserWindow({
     width: 1024,
     height: 1024,
+    autoHideMenuBar: true,
+    icon: __dirname + '../../services.ico',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -84,6 +86,7 @@ const createWindow = async () => {
   menuBuilder.buildMenu();
 
   if (isDev) {
+    
     // in dev mode, load the vite dev server
     await win.loadURL("http://localhost:5173");
     await win.once('ready-to-show', () => {
@@ -94,8 +97,6 @@ const createWindow = async () => {
   } else {
     await win.loadFile(path.join(__dirname, '..', 'index.html'));
   }
-  win.webContents.openDevTools()
-
  
 };
 

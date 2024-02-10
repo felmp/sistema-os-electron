@@ -12,5 +12,8 @@ export default defineConfig({
             '@icon-financeiro': '/src/public/img/financeiro.svg'
         }
     },
-    plugins: [react()]
+    plugins: [react()],
+    define: {
+        __INTLIFY_JIT_COMPILATION__: true
+    }
 });

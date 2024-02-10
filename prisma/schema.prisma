@@ -51,7 +51,7 @@ model Installments {
   is_paid      Boolean
   payment_date String
   price        Float
-  PendingBills PendingBills @relation(fields: [pending_bill_id], references: [id])
+  PendingBills PendingBills @relation(fields: [pending_bill_id], references: [id], onDelete: Cascade)
 
   pending_bill_id Int
 }

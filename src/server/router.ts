@@ -10,7 +10,9 @@ const t = initTRPC.create({
 export const appRouter = t.router({
   os: t.procedure
     .query(() => {
-      return prisma.os.findMany();
+      const os = prisma.os.findMany();
+
+      return os
     }),
   osById: t.procedure
     .input(z.string())
@@ -85,6 +87,15 @@ export const appRouter = t.router({
       return prisma.service.findMany();
     }),
   serviceByOsId: t.procedure.input(z.string()).query(({ input: id }) => {
+    const services = prisma.service.findMany({
+      where: {
+        os_id: Number(id)
+      }
+    })
+
+    return services
+  }),
+  serviceByOsIdMutation: t.procedure.input(z.string()).mutation(({ input: id }) => {
     const services = prisma.service.findMany({
       where: {
         os_id: Number(id)
