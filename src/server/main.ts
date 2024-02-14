@@ -96,6 +96,11 @@ const createWindow = async () => {
     });
   } else {
     await win.loadFile(path.join(__dirname, '..', 'index.html'));
+    await win.once('ready-to-show', () => {
+      win.webContents.setZoomFactor(0.8);
+      win.maximize();
+      win.show();
+    });
   }
  
 };

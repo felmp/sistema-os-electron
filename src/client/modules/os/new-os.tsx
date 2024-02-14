@@ -21,6 +21,7 @@ export default function NewOs() {
     plate: z.string().min(1, "Placa é obrigatória!"),
     model: z.string().min(1, "Modelo é obrigatório!"),
     status: z.enum(["pending", "completed"]).optional(),
+    observation: z.string().optional(),
     services: z.array(
       z.object({
         description: z.string(),
@@ -104,6 +105,7 @@ export default function NewOs() {
       plate: data.plate,
       phone: data.phone,
       status: data.status,
+      observation: data.observation,
     });
 
     for (const s of data.services) {
@@ -248,6 +250,19 @@ export default function NewOs() {
                   {errors.model?.message}
                 </span>
               )}
+            </div>
+          </div>
+
+          <div className="flex flex-row font-normal gap-4 mt-4">
+            <div className="w-full flex flex-col">
+              <label className="mb-3">
+                Observação 
+              </label>
+              <textarea
+                rows={4}
+                className="w-full h-auto rounded pl-2 border border-slate-200 focus:outline-slate-300"
+                {...register("observation")}
+              />
             </div>
           </div>
 

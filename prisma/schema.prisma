@@ -20,6 +20,7 @@ model Os {
   model       String
   date        String
   status      String
+  observation      String?
   services    Service[]
 }
 

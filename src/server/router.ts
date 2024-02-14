@@ -34,8 +34,9 @@ export const appRouter = t.router({
       plate: z.string().min(1, 'Placa é obrigatória!'),
       model: z.string().min(1, 'Modelo é obrigatório!'),
       status: z.string().min(1, 'Status é obrigatório!'),
+      observation: z.string().optional(),
     }))
-    .mutation(async ({ input: { client_name, date, model, phone, plate, status } }) => {
+    .mutation(async ({ input: { client_name, date, model, phone, plate, status, observation } }) => {
       const os = await prisma.os.create({
         data: {
           client_name,
@@ -43,7 +44,8 @@ export const appRouter = t.router({
           model,
           phone,
           plate,
-          status
+          status,
+          observation
         }
       });
 
@@ -69,6 +71,7 @@ export const appRouter = t.router({
       plate: z.string().optional(),
       model: z.string().optional(),
       status: z.string().optional(),
+      observation: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const { id, ...updatedFields } = input;

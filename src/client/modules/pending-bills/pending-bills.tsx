@@ -152,7 +152,7 @@ export default function PendingBills() {
             <div className="w-full font-semibold table-row">
               <div className="text-left p-4 table-cell">ID</div>
               <div className="text-left p-4 table-cell">Titulo</div>
-              <div className="text-left p-4 table-cell">Observação</div>
+              <div className="text-left p-4 table-cell">Descrição</div>
               <div className="text-left p-4 table-cell">Data Vencimento</div>
               <div className="text-left p-4 table-cell">Valor</div>
               <div className="text-left p-4 table-cell">Status</div>
